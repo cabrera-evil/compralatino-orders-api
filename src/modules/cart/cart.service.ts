@@ -55,9 +55,10 @@ export class CartService {
 			data: { quantity },
 		});
 		if (!count) throw new NotFoundException('CART_ITEM_NOT_FOUND');
-		const item = await this.prisma.cartItem.findUniqueOrThrow({
+		const item = await this.prisma.cartItem.findUnique({
 			where: { userId_productCode: { userId, productCode } },
 		});
+		if (!item) throw new NotFoundException('CART_ITEM_NOT_FOUND');
 		return singleResponse(serializeCartItem(item));
 	}
 
