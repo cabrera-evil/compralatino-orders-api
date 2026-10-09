@@ -3,17 +3,31 @@ import { RABBITMQ_SERVICE } from '@/constants/rabbitmq';
 import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
+export interface OrderEventItem {
+	productCode: string;
+	quantity: number;
+	unitPrice: string;
+}
+
 export interface OrderCreatedEvent {
+	eventId: string;
 	orderId: number;
 	userId: number;
 	status: string;
 	totalAmount: string;
+	totalAmountJpy: string | null;
 	orderDate: string;
+	intentSource: string | null;
+	items: OrderEventItem[];
 }
 
 export interface OrderUpdatedEvent {
+	eventId: string;
 	orderId: number;
+	userId: number;
 	status: string;
+	previousStatus: string;
+	updatedAt: string;
 }
 
 @Injectable()
@@ -33,7 +47,10 @@ export class OrderEventsPublisher {
 			);
 			return;
 		}
-		this.client.emit(pattern, payload);
+		this.client.emit(pattern, payload).subscribe({
+			error: (error: unknown) =>
+				this.logger.error(`Failed to publish "${pattern}": ${String(error)}`),
+		});
 	}
 
 	publishOrderCreated(payload: OrderCreatedEvent): void {
