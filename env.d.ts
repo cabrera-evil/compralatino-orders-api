@@ -15,6 +15,7 @@ declare namespace NodeJS {
 		RABBITMQ_URL?: string;
 		RABBITMQ_EXCHANGE?: string;
 		RABBITMQ_QUEUE?: string;
+		CATALOG_RPC_TIMEOUT_MS?: string;
 
 		JWT_SECRET: string;
 		REFRESH_TOKEN_SECRET: string;
