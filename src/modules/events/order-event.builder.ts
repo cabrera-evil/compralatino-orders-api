@@ -16,6 +16,7 @@ export const buildOrderCreatedEvent = (
 	totalAmountJpy: order.totalAmountJpy?.toString() ?? null,
 	orderDate: order.orderDate.toISOString(),
 	intentSource: order.intentSource?.toLowerCase() ?? null,
+	intentBidAmount: order.intentBidAmount?.toString() ?? null,
 	items: order.items.map(({ productCode, quantity, unitPrice }) => ({
 		productCode,
 		quantity,

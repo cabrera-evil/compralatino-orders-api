@@ -75,6 +75,9 @@ export class CheckoutService {
 		const order = await this.prisma.$transaction((tx) =>
 			this.createOrder(tx, userId, [{ product, quantity: 1 }], {
 				intentSource: dto.source.toUpperCase() as PurchaseIntentSource,
+				intentBidAmount: dto.bidAmount
+					? new Prisma.Decimal(dto.bidAmount)
+					: null,
 			})
 		);
 		return this.finish(order);

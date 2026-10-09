@@ -18,6 +18,7 @@ export interface OrderCreatedEvent {
 	totalAmountJpy: string | null;
 	orderDate: string;
 	intentSource: string | null;
+	intentBidAmount: string | null;
 	items: OrderEventItem[];
 }
 

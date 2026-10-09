@@ -33,7 +33,12 @@ export const serializeOrder = (
 		status,
 		statusLabel: statusLabels.get(status) ?? status,
 		intent: order.intentSource
-			? { source: order.intentSource.toLowerCase() }
+			? {
+					source: order.intentSource.toLowerCase(),
+					bidAmount: order.intentBidAmount
+						? toDualMoney(order.intentBidAmount, null)
+						: null,
+				}
 			: null,
 		orderDate: order.orderDate.toISOString(),
 		total: toDualMoney(order.totalAmount, order.totalAmountJpy),
