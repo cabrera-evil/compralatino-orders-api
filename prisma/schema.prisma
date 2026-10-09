@@ -52,6 +52,7 @@ model Order {
   totalAmount        Decimal               @map("total_amount") @db.Decimal(10, 2)
   totalAmountJpy     Decimal?              @map("total_amount_jpy") @db.Decimal(14, 2)
   intentSource       PurchaseIntentSource? @map("intent_source")
+  intentBidAmount    Decimal?              @map("intent_bid_amount") @db.Decimal(10, 2)
   deliveryMethodCode String?               @map("delivery_method_code") @db.VarChar(64)
   paymentMethodCode  String?               @map("payment_method_code") @db.VarChar(64)
   pickupPointCode    String?               @map("pickup_point_code") @db.VarChar(64)
