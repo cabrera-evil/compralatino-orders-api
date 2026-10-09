@@ -17,43 +17,131 @@ datasource db {
   provider = "postgresql"
 }
 
-// Documented as "enum: pending, confirmed, failed, etc. — TBD" in
-// Fase-2-CompraLatino-Mermaid.md 4.3; extend once the real status flow
-// is defined.
 enum OrderStatus {
   PENDING
   CONFIRMED
   FAILED
+  CANCELLED
 }
 
-// Owned by orders_svc (see 2.3 and 4.3). user_id and product_id reference
-// users_svc/catalog_svc respectively; no cross-schema relation is declared
-// since services never access another service's tables directly.
+enum PurchaseIntentSource {
+  BID
+  BUY_NOW
+
+  @@map("purchase_intent_source")
+}
+
+enum CheckoutOptionKind {
+  DELIVERY_METHOD
+  PAYMENT_METHOD
+  PICKUP_POINT
+  DEPARTMENT
+
+  @@map("checkout_option_kind")
+}
+
+// Owned by orders_svc (see 2.3 and 4.3). user_id references users_svc;
+// products are identified by the catalog product code (string). No
+// cross-schema relation is declared since services never access another
+// service's tables directly.
 model Order {
-  id          Int         @id @default(autoincrement())
-  userId      Int         @map("user_id")
-  status      OrderStatus @default(PENDING)
-  orderDate   DateTime    @default(now()) @map("order_date")
-  totalAmount Decimal     @map("total_amount") @db.Decimal(10, 2)
-  createdAt   DateTime    @default(now()) @map("created_at")
-  updatedAt   DateTime    @updatedAt @map("updated_at")
+  id                 Int                   @id @default(autoincrement())
+  userId             Int                   @map("user_id")
+  status             OrderStatus           @default(PENDING)
+  orderDate          DateTime              @default(now()) @map("order_date")
+  totalAmount        Decimal               @map("total_amount") @db.Decimal(10, 2)
+  totalAmountJpy     Decimal?              @map("total_amount_jpy") @db.Decimal(14, 2)
+  intentSource       PurchaseIntentSource? @map("intent_source")
+  deliveryMethodCode String?               @map("delivery_method_code") @db.VarChar(64)
+  paymentMethodCode  String?               @map("payment_method_code") @db.VarChar(64)
+  pickupPointCode    String?               @map("pickup_point_code") @db.VarChar(64)
+  destination        String?               @db.Text
+  contactFullName    String?               @map("contact_full_name") @db.VarChar(255)
+  contactPhone       String?               @map("contact_phone") @db.VarChar(32)
+  contactEmail       String?               @map("contact_email") @db.VarChar(255)
+  trackingStateId    Int?                  @map("tracking_state_id")
+  createdAt          DateTime              @default(now()) @map("created_at")
+  updatedAt          DateTime              @updatedAt @map("updated_at")
 
-  items OrderItem[]
+  items         OrderItem[]
+  trackingState TrackingState? @relation(fields: [trackingStateId], references: [id])
 
-  @@index([userId])
+  @@index([userId, orderDate])
+  @@index([trackingStateId])
   @@map("orders")
 }
 
 model OrderItem {
-  id        Int      @id @default(autoincrement())
-  orderId   Int      @map("order_id")
-  productId Int      @map("product_id")
-  quantity  Int
-  unitPrice Decimal  @map("unit_price") @db.Decimal(10, 2)
-  createdAt DateTime @default(now()) @map("created_at")
+  id           Int      @id @default(autoincrement())
+  orderId      Int      @map("order_id")
+  productId    Int?     @map("product_id")
+  productCode  String   @map("product_code") @db.VarChar(64)
+  title        String   @db.VarChar(255)
+  quantity     Int
+  unitPrice    Decimal  @map("unit_price") @db.Decimal(10, 2)
+  unitPriceJpy Decimal? @map("unit_price_jpy") @db.Decimal(12, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
+  @@index([productCode])
   @@map("order_items")
+}
+
+// Per-user cart. Price fields are a snapshot taken from catalog_svc when the
+// item is added; checkout re-validates against the catalog.
+model CartItem {
+  id            Int       @id @default(autoincrement())
+  userId        Int       @map("user_id")
+  productCode   String    @map("product_code") @db.VarChar(64)
+  title         String    @db.VarChar(255)
+  sellerName    String    @map("seller_name") @db.VarChar(255)
+  productStatus String    @map("product_status") @db.VarChar(32)
+  endsAt        DateTime  @map("ends_at")
+  quantity      Int
+  unitPrice     Decimal   @map("unit_price") @db.Decimal(10, 2)
+  unitPriceJpy  Decimal   @map("unit_price_jpy") @db.Decimal(12, 2)
+  exchangedAt   DateTime? @map("exchanged_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, productCode])
+  @@map("cart_items")
+}
+
+// Seeded catalog tables (see prisma/seeders).
+model CheckoutOption {
+  id          Int                @id @default(autoincrement())
+  kind        CheckoutOptionKind
+  code        String             @db.VarChar(64)
+  label       String             @db.VarChar(255)
+  description String?            @db.Text
+  sortOrder   Int                @default(0) @map("sort_order")
+  active      Boolean            @default(true)
+
+  @@unique([kind, code])
+  @@map("checkout_options")
+}
+
+// code matches the lower-cased OrderStatus enum value.
+model OrderStatusRef {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique @db.VarChar(32)
+  label       String  @db.VarChar(255)
+  description String? @db.Text
+  sortOrder   Int     @default(0) @map("sort_order")
+
+  @@map("order_statuses")
+}
+
+model TrackingState {
+  id          Int     @id @default(autoincrement())
+  code        String  @unique @db.VarChar(32)
+  label       String  @db.VarChar(255)
+  description String? @db.Text
+  sortOrder   Int     @default(0) @map("sort_order")
+  orders      Order[]
+
+  @@map("tracking_states")
 }
