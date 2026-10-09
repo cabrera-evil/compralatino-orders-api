@@ -2,16 +2,10 @@ import { Auth } from '@/decorators/auth.decorator';
 import { CurrentUser } from '@/decorators/current-user.decorator';
 import { RisonQuery } from '@/decorators/rison-query.decorator';
 import { AuthUser } from '@/types/jwt-payload.type';
-import {
-	Controller,
-	Get,
-	HttpCode,
-	Param,
-	ParseIntPipe,
-	Post,
-} from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { OrdersListQuery, OrdersService } from './orders.service';
+import { ParseOrderIdPipe } from './parse-order-id.pipe';
 
 @ApiTags('orders')
 @Auth()
@@ -38,7 +32,7 @@ export class OrdersController {
 	@Get(':id')
 	findOne(
 		@CurrentUser() user: AuthUser,
-		@Param('id', ParseIntPipe) id: number
+		@Param('id', ParseOrderIdPipe) id: number
 	) {
 		return this.ordersService.findOne(user.id, id);
 	}
@@ -46,7 +40,10 @@ export class OrdersController {
 	@ApiOperation({ summary: "Cancel the caller's pending order" })
 	@HttpCode(200)
 	@Post(':id/cancel')
-	cancel(@CurrentUser() user: AuthUser, @Param('id', ParseIntPipe) id: number) {
+	cancel(
+		@CurrentUser() user: AuthUser,
+		@Param('id', ParseOrderIdPipe) id: number
+	) {
 		return this.ordersService.cancel(user.id, id);
 	}
 }

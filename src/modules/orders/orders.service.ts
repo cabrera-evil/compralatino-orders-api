@@ -21,7 +21,11 @@ export const ORDER_INCLUDE = {
 	trackingState: true,
 } satisfies Prisma.OrderInclude;
 
-export type OrdersListQuery = { take?: number; skip?: number; status?: string };
+export type OrdersListQuery = {
+	take?: number;
+	skip?: number;
+	status?: unknown;
+};
 
 @Injectable()
 export class OrdersService {
@@ -93,8 +97,11 @@ export class OrdersService {
 		return serializeOrder(order, await this.refs());
 	}
 
-	private parseStatus(code: string): OrderStatus {
-		const status = OrderStatus[code.toUpperCase() as keyof typeof OrderStatus];
+	private parseStatus(code: unknown): OrderStatus {
+		const status =
+			typeof code === 'string'
+				? OrderStatus[code.toUpperCase() as keyof typeof OrderStatus]
+				: undefined;
 		if (!status) throw new BadRequestException('INVALID_ORDER_STATUS');
 		return status;
 	}
