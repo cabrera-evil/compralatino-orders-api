@@ -1,3 +1,36 @@
+## 1.0.0-beta.1 (2026-10-10)
+
+### Features
+
+* **auth:** add jwt strategy, guard and current-user decorator ([1a0560f](https://github.com/cabrera-evil/compralatino-orders-api/commit/1a0560f360c66f60231ce41bd7009c745f0664bc))
+* **cart:** add per-user cart endpoints ([7d827f0](https://github.com/cabrera-evil/compralatino-orders-api/commit/7d827f0364f70c00c55cec2d8bef03b815443fde))
+* **catalog-client:** add rabbitmq product validation client ([d56d60d](https://github.com/cabrera-evil/compralatino-orders-api/commit/d56d60d16e433621838167f5b377237f1ddad89d))
+* **catalog-tables:** expose checkout options ([85c63ae](https://github.com/cabrera-evil/compralatino-orders-api/commit/85c63ae00879bb74000bb81bf4f0942fa7f1d3a4))
+* **checkout:** require full purchase data and minimum bid on purchase intents ([6b43a11](https://github.com/cabrera-evil/compralatino-orders-api/commit/6b43a11bc2745fd15828dbc54f0a6b3f680204df))
+* **events:** publish order.created and order.updated with event ids ([fee9167](https://github.com/cabrera-evil/compralatino-orders-api/commit/fee9167ab130a0b6d78be5a5010627500c3aa0c0))
+* **health:** report database and rabbitmq status ([39cbf1f](https://github.com/cabrera-evil/compralatino-orders-api/commit/39cbf1f140432930ac3f2b35688943d919be8ea1))
+* **orders:** accept and expose an optional bid amount on purchase intents ([43662f1](https://github.com/cabrera-evil/compralatino-orders-api/commit/43662f11f9a625f2ae8b76d2b9b37c58d54c83bb))
+* **orders:** add checkout, purchase intents and order tracking endpoints ([3483ff1](https://github.com/cabrera-evil/compralatino-orders-api/commit/3483ff111ae7cce9c94fc2e75b02ae4221631e8c))
+* **orders:** serve admin list, get and status update over rabbitmq ([be51877](https://github.com/cabrera-evil/compralatino-orders-api/commit/be518773af84129881f73695ac0c7aa20c034a81))
+* prisma schema and initial migration for orders_svc ([901538a](https://github.com/cabrera-evil/compralatino-orders-api/commit/901538a9b4c06bb127f0e25ec2fded070dcb3015))
+* **prisma:** add cart, checkout option and order catalog schema with migration ([98b096f](https://github.com/cabrera-evil/compralatino-orders-api/commit/98b096f7b19ba7d934a8b53ed5248878c6a5a133))
+* **prisma:** seed checkout options, order statuses and tracking states ([5375d0d](https://github.com/cabrera-evil/compralatino-orders-api/commit/5375d0d966880ae97dcb2f859ecda7a129bb3c33))
+* **prisma:** store the bid amount on purchase intent orders ([05297cd](https://github.com/cabrera-evil/compralatino-orders-api/commit/05297cdf1fb8943a4494fcbb8ec56f99101b6c12))
+* **rabbitmq:** add rabbitmq transport and order events ([107a9a1](https://github.com/cabrera-evil/compralatino-orders-api/commit/107a9a114baf745a71537cb8a1f75f68c5e1d816))
+* **shared:** add decimal money util and order constants ([04f1500](https://github.com/cabrera-evil/compralatino-orders-api/commit/04f1500d4119c8bf40799d0c11595a60ebc5f1e4))
+
+### Bug Fixes
+
+* **auth:** pin jwt verification to hs256 ([0575f67](https://github.com/cabrera-evil/compralatino-orders-api/commit/0575f67d2a337cb80cf7e54b3c5d543850a49d67))
+* **cart:** return 404 when an item vanishes during a quantity update ([f3395ad](https://github.com/cabrera-evil/compralatino-orders-api/commit/f3395ad8321a13961b7757b1adf4a9471f14c9b5))
+* **deps:** upgrade handlebars to 4.7.10 ([7147788](https://github.com/cabrera-evil/compralatino-orders-api/commit/714778869caeee3ad7a0e509caa391ac7e961155))
+* **deps:** upgrade vulnerable dependencies and align nestjs packages ([70678e5](https://github.com/cabrera-evil/compralatino-orders-api/commit/70678e5bcb6559f575d0a220448e2085671bd93a))
+* **docker:** migrate and seed on container start ([7af4af7](https://github.com/cabrera-evil/compralatino-orders-api/commit/7af4af77efb53ff52fdcb13ae64090acbbd19224))
+* **docker:** redeclare the pnpm version arg in the base stage ([b2e5f6a](https://github.com/cabrera-evil/compralatino-orders-api/commit/b2e5f6a3275a09e99b0597426e8b9bba01367050))
+* **health:** make disk threshold a percentage configurable via HEALTH_DISK_THRESHOLD_PERCENT ([947ea40](https://github.com/cabrera-evil/compralatino-orders-api/commit/947ea40e69aa3d200a6135072dc54b8636497129))
+* **orders:** return 404 for out-of-range ids and 400 for non-string status ([8f87f2e](https://github.com/cabrera-evil/compralatino-orders-api/commit/8f87f2e991496a479e92d73d0397103502a25c12))
+* **ws:** avoid logger name clash with the io adapter ([dee4268](https://github.com/cabrera-evil/compralatino-orders-api/commit/dee4268b0baab4fd336f5ac489dc339e2576f8f3))
+
 ## [1.4.0](https://github.com/cabrera-evil/nestjs-template/compare/v1.3.1...v1.4.0) (2025-09-18)
 
 ### Features
