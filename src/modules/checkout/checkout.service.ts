@@ -57,30 +57,55 @@ export class CheckoutService {
 				},
 			});
 			if (count !== cart.length) throw new ConflictException('CART_CHANGED');
-			return this.createOrder(tx, userId, lines, {
-				deliveryMethodCode: dto.deliveryMethod,
-				paymentMethodCode: dto.paymentMethod,
-				pickupPointCode: dto.pickupPoint,
-				destination: dto.destination,
-				contactFullName: dto.contact.fullName,
-				contactPhone: dto.contact.phone,
-				contactEmail: dto.contact.email,
-			});
+			return this.createOrder(tx, userId, lines, this.fulfilment(dto));
 		});
 		return this.finish(order);
 	}
 
 	async createIntent(userId: number, dto: PurchaseIntentDto) {
+		const isBid = dto.source === 'bid';
+		if (isBid && !dto.bidAmount)
+			throw new BadRequestException('BID_AMOUNT_REQUIRED');
+		await this.assertOptions(dto);
 		const [product] = await this.catalog.validateProducts([dto.productCode]);
+		const bidAmount = isBid ? new Prisma.Decimal(dto.bidAmount) : null;
+		if (bidAmount && bidAmount.lt(this.minimumBid(product)))
+			throw new BadRequestException('BID_BELOW_MINIMUM');
 		const order = await this.prisma.$transaction((tx) =>
 			this.createOrder(tx, userId, [{ product, quantity: 1 }], {
+				...this.fulfilment(dto),
 				intentSource: dto.source.toUpperCase() as PurchaseIntentSource,
-				intentBidAmount: dto.bidAmount
-					? new Prisma.Decimal(dto.bidAmount)
-					: null,
+				intentBidAmount: bidAmount,
 			})
 		);
 		return this.finish(order);
+	}
+
+	private minimumBid(product: ValidatedProduct) {
+		return new Prisma.Decimal(product.currentBidUsd ?? product.unitPrice).plus(
+			product.minIncrementUsd ?? 0
+		);
+	}
+
+	private fulfilment(
+		dto: Pick<
+			CheckoutDto,
+			| 'deliveryMethod'
+			| 'paymentMethod'
+			| 'pickupPoint'
+			| 'destination'
+			| 'contact'
+		>
+	): Partial<Prisma.OrderUncheckedCreateInput> {
+		return {
+			deliveryMethodCode: dto.deliveryMethod,
+			paymentMethodCode: dto.paymentMethod,
+			pickupPointCode: dto.pickupPoint,
+			destination: dto.destination,
+			contactFullName: dto.contact.fullName,
+			contactPhone: dto.contact.phone,
+			contactEmail: dto.contact.email,
+		};
 	}
 
 	private async finish(
@@ -144,7 +169,12 @@ export class CheckoutService {
 		return cart;
 	}
 
-	private async assertOptions(dto: CheckoutDto) {
+	private async assertOptions(
+		dto: Pick<
+			CheckoutDto,
+			'deliveryMethod' | 'paymentMethod' | 'pickupPoint' | 'destination'
+		>
+	) {
 		if (!dto.pickupPoint && !dto.destination)
 			throw new BadRequestException('DESTINATION_REQUIRED');
 		const [delivery, payment, pickup] = await Promise.all([

@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
 	IsIn,
@@ -8,10 +8,14 @@ import {
 	Matches,
 	MaxLength,
 } from 'class-validator';
+import { CheckoutDto } from './checkout.dto';
 
 export const PURCHASE_INTENT_SOURCES = ['bid', 'buy_now'] as const;
 
-export class PurchaseIntentDto {
+/** Same delivery/payment/pickup/destination/contact rules as the cart checkout. */
+export class PurchaseIntentDto extends OmitType(CheckoutDto, [
+	'itemIds',
+] as const) {
 	@ApiProperty({ example: 'ya-882190', description: 'Catalog product code' })
 	@IsString()
 	@IsNotEmpty()
@@ -24,7 +28,8 @@ export class PurchaseIntentDto {
 
 	@ApiPropertyOptional({
 		example: '1250.50',
-		description: 'Positive, max 2 decimals',
+		description:
+			'USD, positive, max 2 decimals. Required when source=bid; ignored for buy_now',
 	})
 	@IsOptional()
 	@Transform(({ value }) => (typeof value === 'number' ? String(value) : value))

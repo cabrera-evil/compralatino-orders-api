@@ -97,6 +97,12 @@ export class CatalogClientService {
 			exchangedAt: item.price.exchangedAt
 				? new Date(item.price.exchangedAt)
 				: null,
+			currentBidUsd: this.decimalOrNull(item.currentBidUsd),
+			minIncrementUsd: this.decimalOrNull(item.minIncrementUsd),
 		};
+	}
+
+	private decimalOrNull(value?: string): string | null {
+		return value && DECIMAL_PATTERN.test(value) ? value : null;
 	}
 }
