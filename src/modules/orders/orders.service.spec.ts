@@ -1,13 +1,20 @@
 import { CatalogTablesService } from '@/modules/catalog-tables/catalog-tables.service';
 import { OrderEventsPublisher } from '@/modules/events/order-events.publisher';
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { OrderStatus, Prisma, PrismaClient } from 'prisma/generated/client';
+import {
+	OrderStatus,
+	PaymentStatus,
+	Prisma,
+	PrismaClient,
+} from 'prisma/generated/client';
 import { OrdersService } from './orders.service';
 
 const order = (status: OrderStatus) => ({
 	id: 7,
 	userId: 3,
 	status,
+	paymentStatus: PaymentStatus.AWAITING_PAYMENT,
+	amountReceived: null,
 	items: [],
 	trackingState: null,
 	orderDate: new Date('2026-01-01T00:00:00Z'),

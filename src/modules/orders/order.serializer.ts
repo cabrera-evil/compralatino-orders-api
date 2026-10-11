@@ -61,6 +61,10 @@ export const serializeOrder = (
 			destination: order.destination,
 		},
 		paymentMethod: order.paymentMethodCode,
+		paymentStatus: order.paymentStatus.toLowerCase(),
+		amountReceived: order.amountReceived
+			? toDualMoney(order.amountReceived, null)
+			: null,
 		contact: order.contactEmail
 			? {
 					fullName: order.contactFullName,
