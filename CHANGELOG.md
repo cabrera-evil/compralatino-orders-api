@@ -1,3 +1,9 @@
+## [1.0.0-beta.2](https://github.com/cabrera-evil/compralatino-orders-api/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-10-11)
+
+### Features
+
+* **payments:** add simulated payment webhooks and async payment status ([4fea735](https://github.com/cabrera-evil/compralatino-orders-api/commit/4fea735b5f69d660a859fc4398ce0ced3a17859a))
+
 ## 1.0.0-beta.1 (2026-10-10)
 
 ### Features
