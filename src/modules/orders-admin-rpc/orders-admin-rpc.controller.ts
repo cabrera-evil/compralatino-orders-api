@@ -1,11 +1,13 @@
 import { SkipEncryption } from '@/decorators/skip-encryption.decorator';
 import {
+	AdminAnalyticsQuery,
 	AdminOrdersListQuery,
 	OrdersService,
 } from '@/modules/orders/orders.service';
 import { Controller, HttpException } from '@nestjs/common';
 import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
 import {
+	ORDERS_ADMIN_ANALYTICS_PATTERN,
 	ORDERS_ADMIN_GET_PATTERN,
 	ORDERS_ADMIN_LIST_PATTERN,
 	ORDERS_ADMIN_UPDATE_STATUS_PATTERN,
@@ -39,6 +41,11 @@ export class OrdersAdminRpcController {
 	@MessagePattern(ORDERS_ADMIN_LIST_PATTERN)
 	list(@Payload() payload: AdminOrdersListQuery) {
 		return rpc(() => this.orders.adminList(payload ?? {}));
+	}
+
+	@MessagePattern(ORDERS_ADMIN_ANALYTICS_PATTERN)
+	analytics(@Payload() payload: AdminAnalyticsQuery) {
+		return rpc(() => this.orders.adminAnalytics(payload ?? {}));
 	}
 
 	@MessagePattern(ORDERS_ADMIN_GET_PATTERN)

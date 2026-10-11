@@ -1,4 +1,9 @@
-import { MAX_ORDER_PAGE_SIZE } from '@/constants/orders';
+import {
+	DELIVERED_TRACKING_CODE,
+	MATCH_SAMPLE_LIMIT,
+	MAX_ORDER_PAGE_SIZE,
+	TOP_PRODUCTS_LIMIT,
+} from '@/constants/orders';
 import { CatalogTablesService } from '@/modules/catalog-tables/catalog-tables.service';
 import { buildOrderUpdatedEvent } from '@/modules/events/order-event.builder';
 import { OrderEventsPublisher } from '@/modules/events/order-events.publisher';
@@ -9,7 +14,12 @@ import {
 	Injectable,
 	NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, Prisma, PrismaClient } from 'prisma/generated/client';
+import {
+	OrderStatus,
+	PaymentStatus,
+	Prisma,
+	PrismaClient,
+} from 'prisma/generated/client';
 import {
 	OrderWithRelations,
 	SerializerRefs,
@@ -31,6 +41,17 @@ export type AdminOrdersListQuery = {
 	page?: number;
 	pageSize?: number;
 	status?: unknown;
+};
+
+const NON_SALE_STATUSES = [OrderStatus.CANCELLED, OrderStatus.FAILED];
+
+export type AdminAnalyticsQuery = { from?: unknown; to?: unknown };
+
+type ProductTotals = {
+	productCode: string;
+	title: string;
+	units: number;
+	revenue: Prisma.Decimal;
 };
 
 @Injectable()
@@ -107,6 +128,91 @@ export class OrdersService {
 			total,
 			page: currentPage,
 			pageSize: take,
+		};
+	}
+
+	/** BI aggregates for orders placed in [from, to] (ISO instants, both inclusive). */
+	async adminAnalytics({ from, to }: AdminAnalyticsQuery) {
+		const gte = new Date(from as string);
+		const lte = new Date(to as string);
+		if (!from || !to || isNaN(+gte) || isNaN(+lte) || gte > lte)
+			throw new BadRequestException('INVALID_DATE_RANGE');
+		const cohort: Prisma.OrderWhereInput = { orderDate: { gte, lte } };
+		// Each stage narrows the previous one, so no stage can exceed its predecessor.
+		const confirmed = { ...cohort, status: OrderStatus.CONFIRMED };
+		const paid = { ...confirmed, paymentStatus: PaymentStatus.PAID };
+		const delivered = {
+			...paid,
+			trackingState: { code: DELIVERED_TRACKING_CODE },
+		};
+		const [[placed, nConfirmed, nPaid, nDelivered], items, sample] =
+			await Promise.all([
+				Promise.all(
+					[cohort, confirmed, paid, delivered].map((where) =>
+						this.prisma.order.count({ where })
+					)
+				),
+				// ponytail: aggregated in memory over the range's lines; move to SQL if ranges get huge
+				this.prisma.orderItem.findMany({
+					where: {
+						order: {
+							...cohort,
+							status: { notIn: NON_SALE_STATUSES },
+						},
+					},
+					select: {
+						productCode: true,
+						title: true,
+						quantity: true,
+						unitPrice: true,
+					},
+				}),
+				this.prisma.order.findMany({
+					where: { ...cohort, status: { notIn: NON_SALE_STATUSES } },
+					select: {
+						id: true,
+						userId: true,
+						items: { select: { productCode: true } },
+					},
+					orderBy: [{ orderDate: 'desc' }, { id: 'desc' }],
+					take: MATCH_SAMPLE_LIMIT,
+				}),
+			]);
+
+		const totals = new Map<string, ProductTotals>();
+		for (const { productCode, title, quantity, unitPrice } of items) {
+			const row = totals.get(productCode) ?? {
+				productCode,
+				title,
+				units: 0,
+				revenue: new Prisma.Decimal(0),
+			};
+			row.units += quantity;
+			row.revenue = row.revenue.plus(unitPrice.times(quantity));
+			totals.set(productCode, row);
+		}
+		const top = (cmp: (a: ProductTotals, b: ProductTotals) => number) =>
+			[...totals.values()]
+				.sort((a, b) => cmp(a, b) || a.productCode.localeCompare(b.productCode))
+				.slice(0, TOP_PRODUCTS_LIMIT)
+				.map((row) => ({ ...row, revenue: row.revenue.toString() }));
+
+		return {
+			funnel: {
+				placed,
+				confirmed: nConfirmed,
+				paid: nPaid,
+				delivered: nDelivered,
+			},
+			topProducts: {
+				byUnits: top((a, b) => b.units - a.units),
+				byRevenue: top((a, b) => b.revenue.comparedTo(a.revenue)),
+			},
+			matchSample: sample.map(({ id, userId, items }) => ({
+				orderId: id,
+				userId,
+				productCodes: items.map((i) => i.productCode),
+			})),
 		};
 	}
 
