@@ -1,3 +1,9 @@
+## [1.0.0-beta.3](https://github.com/cabrera-evil/compralatino-orders-api/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2026-10-11)
+
+### Features
+
+* **orders:** add admin analytics RPC for funnel and top products ([354b5f3](https://github.com/cabrera-evil/compralatino-orders-api/commit/354b5f348630daf67c9052c5a85f9a0f160c4872))
+
 ## [1.0.0-beta.2](https://github.com/cabrera-evil/compralatino-orders-api/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2026-10-11)
 
 ### Features
