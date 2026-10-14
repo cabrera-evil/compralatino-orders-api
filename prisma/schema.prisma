@@ -24,6 +24,19 @@ enum OrderStatus {
   CANCELLED
 }
 
+// Settlement state reported by the (simulated) payment webhooks. Independent of
+// OrderStatus: only PAID confirms an order; UNDERPAID / OVERPAID wait for review.
+enum PaymentStatus {
+  AWAITING_PAYMENT
+  PAID
+  FAILED
+  UNDERPAID
+  OVERPAID
+  EXPIRED
+
+  @@map("payment_status")
+}
+
 enum PurchaseIntentSource {
   BID
   BUY_NOW
@@ -60,6 +73,8 @@ model Order {
   contactFullName    String?               @map("contact_full_name") @db.VarChar(255)
   contactPhone       String?               @map("contact_phone") @db.VarChar(32)
   contactEmail       String?               @map("contact_email") @db.VarChar(255)
+  paymentStatus      PaymentStatus         @default(AWAITING_PAYMENT) @map("payment_status")
+  amountReceived     Decimal?              @map("amount_received") @db.Decimal(10, 2)
   trackingStateId    Int?                  @map("tracking_state_id")
   createdAt          DateTime              @default(now()) @map("created_at")
   updatedAt          DateTime              @updatedAt @map("updated_at")
@@ -70,6 +85,17 @@ model Order {
   @@index([userId, orderDate])
   @@index([trackingStateId])
   @@map("orders")
+}
+
+// One row per processed webhook delivery: the primary key makes retries idempotent.
+model PaymentWebhookEvent {
+  eventId   String   @id @map("event_id") @db.VarChar(64)
+  orderId   Int      @map("order_id")
+  outcome   String   @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@map("payment_webhook_events")
 }
 
 model OrderItem {

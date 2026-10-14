@@ -9,6 +9,8 @@ export type CatalogProductReply = {
 	status?: string;
 	endsAt?: string;
 	price?: { usd: string; jpy: string; exchangedAt?: string | null };
+	currentBidUsd?: string;
+	minIncrementUsd?: string;
 };
 
 export type CatalogValidateReply = { items: CatalogProductReply[] };
@@ -22,4 +24,6 @@ export type ValidatedProduct = {
 	unitPrice: string;
 	unitPriceJpy: string;
 	exchangedAt: Date | null;
+	currentBidUsd: string | null;
+	minIncrementUsd: string | null;
 };
